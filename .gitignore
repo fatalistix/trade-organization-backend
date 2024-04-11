@@ -25,3 +25,9 @@ bin/
 
 # sqls config file
 .sqls/
+
+# Jetbrains ide
+.idea
+
+# Environment variables
+.env
