@@ -1,6 +1,6 @@
 MAKEFLAGS += --silent
 
-EXECUTABLE=trading-organization-backend
+EXECUTABLE=trade-organization-backend
 EXECUTABLE_DIR=bin
 SOURCE=cmd/$(EXECUTABLE)/main.go
 
