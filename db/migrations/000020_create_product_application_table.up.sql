@@ -6,4 +6,4 @@ CREATE TABLE product_application (
     PRIMARY KEY (id),
     FOREIGN KEY (application_id) REFERENCES application(id),
     FOREIGN KEY (product_id) REFERENCES product(id)
-)
+);

@@ -1,0 +1,1 @@
+DROP TABLE receipting_point_with_accounting;

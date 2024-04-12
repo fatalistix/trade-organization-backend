@@ -1,3 +1,0 @@
-DROP TABLE customer_accounting_point;
-
-DROP TYPE customer_accounting_point_type;

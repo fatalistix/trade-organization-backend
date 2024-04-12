@@ -1,1 +1,0 @@
-DROP TABLE receipt_without_accounting;

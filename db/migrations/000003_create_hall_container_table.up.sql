@@ -1,10 +1,5 @@
-CREATE TYPE hall_container_type AS ENUM(
-    'section',
-    'shop'
-);
-
 CREATE TABLE hall_container (
     id SERIAL UNIQUE NOT NULL,
-    type hall_container_type NOT NULL,
+    type TEXT NOT NULL CHECK ( type in ('section', 'shop') ),
     PRIMARY KEY (id, type)
 );
