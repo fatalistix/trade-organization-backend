@@ -49,27 +49,3 @@ func (m *Migrator) ApplyMigrations(db *sql.DB, dbName string) error {
 
 	return nil
 }
-
-//func Migrate(db *sql.DB) error {
-//	const op = "storage.migration.postgres.Migrate"
-//
-//	driver, err := postgres.WithInstance(db, &postgres.Config{})
-//	if err != nil {
-//		return fmt.Errorf("%s: %w", op, err)
-//	}
-//
-//	m, err := migrate.NewWithDatabaseInstance(
-//		"file:///db/migrations",
-//		"postgres", driver,
-//	)
-//	if err != nil {
-//		return fmt.Errorf("%s: %w", op, err)
-//	}
-//
-//	err = m.Up()
-//	if err != nil {
-//		return fmt.Errorf("%s: %w", op, err)
-//	}
-//
-//	return nil
-//}
