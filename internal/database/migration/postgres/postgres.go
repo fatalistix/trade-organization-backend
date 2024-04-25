@@ -16,7 +16,7 @@ type Migrator struct {
 }
 
 func NewMigrator(sqlFiles fs.FS, dirName string) (*Migrator, error) {
-	const op = "storage.migration.postgres.NewMigrator"
+	const op = "database.migration.postgres.NewMigrator"
 
 	driver, err := iofs.New(sqlFiles, dirName)
 	if err != nil {
@@ -27,7 +27,7 @@ func NewMigrator(sqlFiles fs.FS, dirName string) (*Migrator, error) {
 }
 
 func (m *Migrator) ApplyMigrations(db *sql.DB, dbName string) error {
-	const op = "storage.migration.postgres.ApplyMigrations"
+	const op = "database.migration.postgres.ApplyMigrations"
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {

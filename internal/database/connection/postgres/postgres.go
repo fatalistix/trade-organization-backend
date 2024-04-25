@@ -17,7 +17,7 @@ const (
 )
 
 func NewDB(host string, port int, user string, password string, dbname string, sslMode sslMode) (*sql.DB, error) {
-	const op = "storage.connection.postgres.NewDB"
+	const op = "database.connection.postgres.NewDB"
 
 	pgCredentials := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",

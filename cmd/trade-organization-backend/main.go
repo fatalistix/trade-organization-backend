@@ -1,8 +1,8 @@
 package main
 
 import (
-	pgConnect "github.com/fatalistix/trade-organization-backend/internal/storage/connection/postgres"
-	pgMigrate "github.com/fatalistix/trade-organization-backend/internal/storage/migration/postgres"
+	pgconnect "github.com/fatalistix/trade-organization-backend/internal/database/connection/postgres"
+	pgmigrate "github.com/fatalistix/trade-organization-backend/internal/database/migration/postgres"
 	"log"
 	"os"
 )
@@ -20,19 +20,19 @@ func main() {
 
 	migrationFiles := os.DirFS("db")
 
-	db, err := pgConnect.NewDB(
+	db, err := pgconnect.NewDB(
 		"localhost",
 		5434,
 		"trade-organization-owner",
 		"trade-organization-owner",
 		"trade-organization",
-		pgConnect.SSLDisable,
+		pgconnect.SSLDisable,
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	migrator, err := pgMigrate.NewMigrator(migrationFiles, "migrations")
+	migrator, err := pgmigrate.NewMigrator(migrationFiles, "migrations")
 	if err != nil {
 		log.Fatal(err)
 	}
