@@ -1,0 +1,1 @@
+DROP TABLE salary_history;
