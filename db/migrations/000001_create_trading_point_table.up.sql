@@ -9,7 +9,17 @@ CREATE TABLE trading_point (
 
 CREATE TABLE utility_service (
     id SERIAL UNIQUE NOT NULL,
-    payment_day DATE NOT NULL DEFAULT CURRENT_DATE,
+    payment_day TIMESTAMP NOT NULL DEFAULT NOW(),
+    amount NUMERIC(18, 2) NOT NULL CHECK ( amount >= 0 ),
+    trading_point_id INTEGER NOT NULL,
+    trading_point_type TEXT NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (trading_point_id, trading_point_type) REFERENCES trading_point(id, type)
+);
+
+CREATE TABLE rental_charge_history (
+    id SERIAL UNIQUE NOT NULL,
+    payment_day TIMESTAMP NOT NULL DEFAULT NOW(),
     amount NUMERIC(18, 2) NOT NULL CHECK ( amount >= 0 ),
     trading_point_id INTEGER NOT NULL,
     trading_point_type TEXT NOT NULL,
