@@ -17,7 +17,7 @@ WITH sum_square AS (
 )
 SELECT sum_quantity / sum_square;
 
-WITH num_of_halls AS (
+WITH halls_count AS (
     SELECT COUNT(*)
     FROM hall
     WHERE trading_point_type = ?
@@ -34,7 +34,7 @@ WITH num_of_halls AS (
     FROM product_receipt
     WHERE (receipt_id, receipt_type) IN (receipts_with_trading_point_type)
 )
-SELECT sum_quantity / num_of_halls;
+SELECT sum_quantity / halls_count;
 
 WITH counter_count AS (
     SELECT SUM(num_of_counter)
