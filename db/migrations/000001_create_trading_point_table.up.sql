@@ -10,7 +10,7 @@ CREATE TABLE trading_point (
 
 CREATE TABLE utility_service (
     id SERIAL UNIQUE NOT NULL,
-    payment_day TIMESTAMP NOT NULL DEFAULT NOW(),
+    payment_time TIMESTAMP NOT NULL DEFAULT NOW(),
     amount NUMERIC(18, 2) NOT NULL CHECK ( amount >= 0 ),
     trading_point_id INTEGER NOT NULL,
     trading_point_type TEXT NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE utility_service (
 
 CREATE TABLE rental_charge_history (
     id SERIAL UNIQUE NOT NULL,
-    payment_day TIMESTAMP NOT NULL DEFAULT NOW(),
+    payment_time TIMESTAMP NOT NULL DEFAULT NOW(),
     amount NUMERIC(18, 2) NOT NULL CHECK ( amount >= 0 ),
     trading_point_id INTEGER NOT NULL,
     trading_point_type TEXT NOT NULL,
