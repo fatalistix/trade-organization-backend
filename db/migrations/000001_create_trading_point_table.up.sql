@@ -3,7 +3,8 @@ CREATE TABLE trading_point (
     type TEXT NOT NULL CHECK ( type IN ('department_store', 'store', 'kiosk', 'tray') ),
     area_plot FLOAT NOT NULL CHECK ( area_plot >= 0 ),
     rental_charge NUMERIC(18, 2) NOT NULL CHECK ( rental_charge >= 0 ),
-    num_of_counter INTEGER NOT NULL CHECK ( num_of_counter >= 0 ),
+    counter_count INTEGER NOT NULL CHECK ( counter_count >= 0 ),
+    address TEXT NOT NULL,
     PRIMARY KEY (id, type)
 );
 
