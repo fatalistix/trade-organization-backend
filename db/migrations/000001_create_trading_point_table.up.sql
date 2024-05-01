@@ -18,7 +18,7 @@ CREATE TABLE utility_service (
     FOREIGN KEY (trading_point_id, trading_point_type) REFERENCES trading_point(id, type)
 );
 
-CREATE TABLE rental_charge_history (
+CREATE TABLE rental_charge (
     id SERIAL UNIQUE NOT NULL,
     payment_time TIMESTAMP NOT NULL DEFAULT NOW(),
     amount NUMERIC(18, 2) NOT NULL CHECK ( amount >= 0 ),
