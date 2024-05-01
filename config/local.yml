@@ -1,0 +1,11 @@
+grpc:
+  port: 6969
+postgresql:
+  host: localhost
+  port: 5434
+  user: trade-organization-owner
+  password: trade-organization-owner
+  dbname: trade-organization
+  sslmode: disable
+migrations:
+  path: "./db/migrations"
