@@ -3,20 +3,17 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
 
 	_ "github.com/lib/pq"
 )
 
-type sslMode string
+type Database struct {
+	db *bun.DB
+}
 
-const (
-	SSLDisable    sslMode = "disable"
-	SSLRequire    sslMode = "require"
-	SSLVerifyFull sslMode = "verify-full"
-	SSLVerifyCa   sslMode = "verify-ca"
-)
-
-func NewDB(host string, port int, user string, password string, dbname string, sslMode sslMode) (*sql.DB, error) {
+func NewDatabase(host string, port uint16, user string, password string, dbname string, sslMode string) (*Database, error) {
 	const op = "database.connection.postgres.NewDB"
 
 	pgCredentials := fmt.Sprintf(
@@ -24,16 +21,22 @@ func NewDB(host string, port int, user string, password string, dbname string, s
 		host, port, user, password, dbname, sslMode,
 	)
 
-	db, err := sql.Open("postgres", pgCredentials)
+	sqlDB, err := sql.Open("postgres", pgCredentials)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	// verify that data source name is valid (according to godoc of `sql.Open`)
-	err = db.Ping()
+	err = sqlDB.Ping()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return db, nil
+	bunDB := bun.NewDB(sqlDB, pgdialect.New())
+
+	return &Database{db: bunDB}, nil
+}
+
+func (d *Database) DB() *bun.DB {
+	return d.db
 }
