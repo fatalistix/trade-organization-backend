@@ -6,14 +6,12 @@ import (
 )
 
 type TradingPoint struct {
-	ID              int32
-	Type            Type
-	AreaPlot        float64
-	RentalCharge    core.Money
-	CounterCount    int32
-	Address         string
-	UtilityServices []UtilityService
-	RentalCharges   []RentalCharge
+	ID           int32
+	Type         Type
+	AreaPlot     float64
+	RentalCharge *core.Money
+	CounterCount int32
+	Address      string
 }
 
 type UtilityService struct {
