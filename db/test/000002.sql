@@ -1,0 +1,9 @@
+START TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+DELETE FROM trading_point;
+
+DELETE FROM receipting_point_with_accounting;
+
+DELETE FROM trading_point;
+
+COMMIT TRANSACTION;
