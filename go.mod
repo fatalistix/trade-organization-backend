@@ -3,7 +3,7 @@ module github.com/fatalistix/trade-organization-backend
 go 1.22.2
 
 require (
-	github.com/fatalistix/trade-organization-proto v0.0.3
+	github.com/fatalistix/trade-organization-proto v0.0.15
 	github.com/golang-cz/devslog v0.0.8
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
@@ -21,6 +21,10 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
+	github.com/primalskill/errors v1.2.0 // indirect
+	github.com/primalskill/golog v1.3.0 // indirect
+	github.com/rs/cors v1.11.0 // indirect
+	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
