@@ -39,13 +39,13 @@ func (m *Migrator) ApplyMigrations(db *sql.DB, dbName string) error {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	defer func() {
-		_, _ = migrator.Close()
-	}()
-
 	if err = migrator.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return fmt.Errorf("%s: unable to apply migration: %w", op, err)
 	}
 
 	return nil
+}
+
+func (m *Migrator) Close() error {
+	return m.srcDriver.Close()
 }
