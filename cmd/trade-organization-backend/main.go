@@ -5,7 +5,7 @@ import (
 	"github.com/fatalistix/trade-organization-backend/internal/config"
 	"github.com/fatalistix/trade-organization-backend/internal/env"
 	slogattr "github.com/fatalistix/trade-organization-backend/internal/lib/log/slog/attr"
-	"github.com/golang-cz/devslog"
+	"github.com/primalskill/golog"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -45,20 +45,24 @@ func main() {
 
 	<-stop
 
+	log.Info("stopping application")
+
 	a.Stop()
 	log.Info("application stopped")
 }
 
 func setupLogger() *slog.Logger {
-	slogOpts := &slog.HandlerOptions{
-		AddSource: true,
-		Level:     slog.LevelDebug,
-	}
-	opts := &devslog.Options{
-		HandlerOptions:  slogOpts,
-		SortKeys:        true,
-		NewLineAfterLog: true,
-	}
+	//slogOpts := &slog.HandlerOptions{
+	//	AddSource: true,
+	//	Level:     slog.LevelDebug,
+	//}
+	//opts := &devslog.Options{
+	//	HandlerOptions:  slogOpts,
+	//	SortKeys:        true,
+	//	NewLineAfterLog: true,
+	//}
+	//
+	//return slog.New(devslog.NewHandler(os.Stdout, opts))
 
-	return slog.New(devslog.NewHandler(os.Stdout, opts))
+	return golog.NewDevelopment()
 }
