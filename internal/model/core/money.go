@@ -7,6 +7,22 @@ type Money struct {
 	Pennies int8
 }
 
-func (m Money) ByteArray() []byte {
-	return []byte(fmt.Sprintf("%d%d", m.Rubles, m.Pennies))
+func (m Money) String() string {
+	return fmt.Sprintf("%d.%d", m.Rubles, m.Pennies)
+}
+
+func MoneyFromString(str string) (*Money, error) {
+	const op = "model.core.MoneyFromString"
+
+	var rubles int64
+	var pennies int8
+	_, err := fmt.Sscanf(str, "%d.%d", &rubles, &pennies)
+	if err != nil {
+		return nil, fmt.Errorf("%s: unable to parse money: %w", op, err)
+	}
+
+	return &Money{
+		Rubles:  rubles,
+		Pennies: pennies,
+	}, nil
 }
