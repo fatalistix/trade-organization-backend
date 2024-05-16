@@ -10,3 +10,12 @@ services:
       POSTGRES_DB: trade-organization
       POSTGRES_USER: trade-organization-owner
       POSTGRES_PASSWORD: trade-organization-owner
+
+  migrate:
+    image: migrate/migrate
+    container_name: trade-organization-migrate
+    volumes:
+      - ./db/migrations:/migrations
+    command: ["-path", "/migrations", "-database", "postgres://trade-organization-owner:trade-organization-owner@trade-organization-db:5432/trade-organization?sslmode=disable", "up"]
+    depends_on:
+      - db
