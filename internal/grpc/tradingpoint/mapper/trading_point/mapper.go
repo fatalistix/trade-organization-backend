@@ -1,13 +1,14 @@
-package tradingpoint
+package trading_point
 
 import (
 	"fmt"
-	model "github.com/fatalistix/trade-organization-backend/internal/model/tradingpoint"
+	model "github.com/fatalistix/trade-organization-backend/internal/domain/model/trading_point"
+	grpccore "github.com/fatalistix/trade-organization-backend/internal/grpc/core/mapper"
 	proto "github.com/fatalistix/trade-organization-proto/gen/go/tradingpoint"
 )
 
 func ProtoTypeToModelType(t proto.TradingPointType) (model.Type, error) {
-	const op = "grpc.tradingpoint.protoTypeToModelType"
+	const op = "grpc.tradingpoint.mapper.ProtoTypeToModelType"
 
 	switch t {
 	case proto.TradingPointType_TRADING_POINT_DEPARTMENT_STORE:
@@ -24,7 +25,7 @@ func ProtoTypeToModelType(t proto.TradingPointType) (model.Type, error) {
 }
 
 func ModelTypeToProtoType(t model.Type) (proto.TradingPointType, error) {
-	const op = "grpc.tradingpoint.modelTypeToProtoType"
+	const op = "grpc.tradingpoint.mapper.ModelTypeToProtoType"
 
 	switch t {
 	case model.TypeDepartmentStore:
@@ -38,4 +39,21 @@ func ModelTypeToProtoType(t model.Type) (proto.TradingPointType, error) {
 	default:
 		return proto.TradingPointType_TRADING_POINT_STORE, fmt.Errorf("%s: unknown type: %s", op, t)
 	}
+}
+
+func ModelTradingPointToProtoTradingPoint(tp *model.TradingPoint) (*proto.TradingPoint, error) {
+	const op = "grpc.register.mapper.ModelTradingPointToProtoTradingPoint"
+
+	protoType, err := ModelTypeToProtoType(tp.Type)
+	if err != nil {
+		return nil, fmt.Errorf("%s: error mapping: %w", op, err)
+	}
+	return &proto.TradingPoint{
+		Id:           tp.ID,
+		Type:         protoType,
+		AreaPlot:     tp.AreaPlot,
+		RentalCharge: grpccore.ModelMoneyToProtoMoney(tp.RentalCharge),
+		CounterCount: tp.CounterCount,
+		Address:      tp.Address,
+	}, nil
 }

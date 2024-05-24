@@ -1,7 +1,7 @@
 package tradingpoint
 
 import (
-	"github.com/fatalistix/trade-organization-backend/internal/model/core"
+	"github.com/fatalistix/trade-organization-backend/internal/domain/model/core"
 	"time"
 )
 
@@ -9,7 +9,7 @@ type TradingPoint struct {
 	ID           int32
 	Type         Type
 	AreaPlot     float64
-	RentalCharge *core.Money
+	RentalCharge core.Money
 	CounterCount int32
 	Address      string
 }
