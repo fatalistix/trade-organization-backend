@@ -1,4 +1,4 @@
-package core
+package mapper
 
 import (
 	model "github.com/fatalistix/trade-organization-backend/internal/domain/model/core"
