@@ -1,4 +1,4 @@
-package tradingpoint
+package trading_point
 
 import "fmt"
 
@@ -24,4 +24,8 @@ func TypeFromString(s string) (Type, error) {
 	default:
 		return "", fmt.Errorf("unknown type: %s", s)
 	}
+}
+
+func (t Type) String() string {
+	return string(t)
 }
