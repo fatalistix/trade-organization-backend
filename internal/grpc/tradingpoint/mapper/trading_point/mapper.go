@@ -41,7 +41,7 @@ func ModelTypeToProtoType(t model.Type) (proto.TradingPointType, error) {
 	}
 }
 
-func ModelTradingPointToProtoTradingPoint(tp *model.TradingPoint) (*proto.TradingPoint, error) {
+func ModelTradingPointToProtoTradingPoint(tp model.TradingPoint) (*proto.TradingPoint, error) {
 	const op = "grpc.register.mapper.ModelTradingPointToProtoTradingPoint"
 
 	protoType, err := ModelTypeToProtoType(tp.Type)
