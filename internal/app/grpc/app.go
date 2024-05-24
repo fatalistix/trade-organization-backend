@@ -6,6 +6,7 @@ import (
 	"github.com/fatalistix/trade-organization-backend/internal/database/connection/postgres"
 	sellergrpc "github.com/fatalistix/trade-organization-backend/internal/grpc/seller"
 	tradingpointgrpc "github.com/fatalistix/trade-organization-backend/internal/grpc/tradingpoint"
+	sellerrepository "github.com/fatalistix/trade-organization-backend/internal/repository/seller"
 	tradingpointrepository "github.com/fatalistix/trade-organization-backend/internal/repository/tradingpoint"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
@@ -47,7 +48,7 @@ func NewApp(log *slog.Logger, port int, database *postgres.Database) *App {
 	)
 
 	tradingpointgrpc.RegisterServer(grpcServer, log, tradingpointrepository.NewRepository(database))
-	sellergrpc.RegisterServer(grpcServer, log)
+	sellergrpc.RegisterServer(grpcServer, log, sellerrepository.NewRepository(database))
 
 	return &App{
 		port:       port,
