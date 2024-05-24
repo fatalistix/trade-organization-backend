@@ -16,9 +16,11 @@ func main() {
 	log := setupLogger()
 
 	env.MustLoadEnv()
+
 	log.Info("environment variables loaded")
 
 	configPath := os.Getenv("CONFIG_PATH")
+
 	cfg := config.MustLoadConfig(configPath)
 	log.Info("config loaded")
 	log.Info("server info:", slog.Int("port", int(cfg.GRPC.Port)))
