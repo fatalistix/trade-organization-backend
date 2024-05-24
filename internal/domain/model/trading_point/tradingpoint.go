@@ -1,4 +1,4 @@
-package tradingpoint
+package trading_point
 
 import (
 	"github.com/fatalistix/trade-organization-backend/internal/domain/model/core"
