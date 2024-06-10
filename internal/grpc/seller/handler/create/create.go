@@ -1,4 +1,4 @@
-package register
+package create
 
 import (
 	"context"
@@ -31,7 +31,7 @@ type SellerRegisterer interface {
 func MakeRegisterHandlerFunc(log *slog.Logger, registerer SellerRegisterer) HandlerFunc {
 	const op = "grpc.seller.handler.register.MakeRegisterHandlerFunc"
 
-	log = slog.With(
+	log = log.With(
 		log, slog.String("op", op),
 	)
 

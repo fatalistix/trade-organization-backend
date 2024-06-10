@@ -3,7 +3,7 @@ module github.com/fatalistix/trade-organization-backend
 go 1.22.2
 
 require (
-	github.com/fatalistix/trade-organization-proto v0.0.26
+	github.com/fatalistix/trade-organization-proto v0.0.48
 	github.com/golang-cz/devslog v0.0.8
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
