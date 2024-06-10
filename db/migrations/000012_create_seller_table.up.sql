@@ -1,11 +1,5 @@
-CREATE TYPE seller_status AS ENUM(
-    'working',
-    'not_working'
-);
-
 CREATE TABLE seller (
     id SERIAL UNIQUE NOT NULL,
-    status seller_status NOT NULL DEFAULT 'working',
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     middle_name TEXT NOT NULL,
