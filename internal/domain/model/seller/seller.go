@@ -8,7 +8,6 @@ import (
 
 type Seller struct {
 	ID          int32
-	Status      Status
 	FirstName   string
 	LastName    string
 	MiddleName  string

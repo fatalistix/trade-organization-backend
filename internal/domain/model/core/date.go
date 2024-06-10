@@ -9,7 +9,7 @@ type Date struct {
 }
 
 func (d Date) String() string {
-	return fmt.Sprintf("%04d-%02d-%02d", d.Year, d.Day, d.Month)
+	return fmt.Sprintf("%04d-%02d-%02d", d.Year, d.Month, d.Day)
 }
 
 func DateFromString(date string) (Date, error) {
@@ -17,7 +17,7 @@ func DateFromString(date string) (Date, error) {
 
 	d := Date{}
 
-	_, err := fmt.Sscanf(date, "%04d-%02d-%02d", &d.Year, &d.Day, &d.Month)
+	_, err := fmt.Sscanf(date, "%04d-%02d-%02d", &d.Year, &d.Month, &d.Day)
 	if err != nil {
 		return Date{}, fmt.Errorf("%s: %w", op, err)
 	}
