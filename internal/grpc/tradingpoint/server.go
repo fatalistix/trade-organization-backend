@@ -5,6 +5,7 @@ import (
 	"github.com/fatalistix/trade-organization-backend/internal/grpc/tradingpoint/handler/add_hall"
 	"github.com/fatalistix/trade-organization-backend/internal/grpc/tradingpoint/handler/add_section"
 	"github.com/fatalistix/trade-organization-backend/internal/grpc/tradingpoint/handler/department_store"
+	"github.com/fatalistix/trade-organization-backend/internal/grpc/tradingpoint/handler/gettradingpoint"
 	"github.com/fatalistix/trade-organization-backend/internal/grpc/tradingpoint/handler/list"
 	"github.com/fatalistix/trade-organization-backend/internal/grpc/tradingpoint/handler/register"
 	repository "github.com/fatalistix/trade-organization-backend/internal/repository/tradingpoint"
@@ -20,6 +21,7 @@ type ServerAPI struct {
 	departmentStoreHandlerFunc department_store.HandlerFunc
 	registerHandlerFunc        register.HandlerFunc
 	listHandlerFunc            list.HandlerFunc
+	getTradingPointFunc        gettradingpoint.HandlerFunc
 }
 
 func RegisterServer(gRPC *grpc.Server, log *slog.Logger, repository *repository.Repository) {
@@ -31,6 +33,7 @@ func RegisterServer(gRPC *grpc.Server, log *slog.Logger, repository *repository.
 			departmentStoreHandlerFunc: department_store.MakeDepartmentStoreHandlerFunc(log, repository),
 			registerHandlerFunc:        register.MakeRegisterHandlerFunc(log, repository),
 			listHandlerFunc:            list.MakeListHandlerFunc(log, repository),
+			getTradingPointFunc:        gettradingpoint.MakeGetHandlerFunc(log, repository),
 		},
 	)
 }
@@ -53,4 +56,8 @@ func (s *ServerAPI) Register(ctx context.Context, req *proto.RegisterRequest) (*
 
 func (s *ServerAPI) List(ctx context.Context, req *proto.ListRequest) (*proto.ListResponse, error) {
 	return s.listHandlerFunc(ctx, req)
+}
+
+func (s *ServerAPI) TradingPoint(ctx context.Context, req *proto.TradingPointRequest) (*proto.TradingPointResponse, error) {
+	return s.getTradingPointFunc(ctx, req)
 }

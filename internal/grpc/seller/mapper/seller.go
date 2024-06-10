@@ -9,26 +9,8 @@ import (
 	proto "github.com/fatalistix/trade-organization-proto/gen/go/seller"
 )
 
-func ModelStatusToProtoStatus(status model.Status) (proto.SellerStatus, error) {
-	const op = "grpc.seller.mapper.modelStatusToProtoStatus"
-
-	switch status {
-	case model.StatusWorking:
-		return proto.SellerStatus_SELLER_STATUS_WORKING, nil
-	case model.StatusNotWorking:
-		return proto.SellerStatus_SELLER_STATUS_NOT_WORKING, nil
-	default:
-		return proto.SellerStatus_SELLER_STATUS_WORKING, fmt.Errorf("%s: unknown status: %s", op, status)
-	}
-}
-
 func ModelSellerToProtoSeller(seller model.Seller) (*proto.Seller, error) {
 	const op = "grpc.seller.mapper.modelSellerToProtoSeller"
-
-	status, err := ModelStatusToProtoStatus(seller.Status)
-	if err != nil {
-		return nil, fmt.Errorf("%s: error mapping: %w", op, err)
-	}
 
 	worksAt, err := ModelWorksAtToProtoWorksAt(seller.WorksAt)
 	if err != nil {
@@ -37,7 +19,6 @@ func ModelSellerToProtoSeller(seller model.Seller) (*proto.Seller, error) {
 
 	return &proto.Seller{
 		Id:          seller.ID,
-		Status:      status,
 		FirstName:   seller.FirstName,
 		LastName:    seller.LastName,
 		MiddleName:  seller.MiddleName,

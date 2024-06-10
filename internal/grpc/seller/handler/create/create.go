@@ -13,10 +13,10 @@ import (
 	"log/slog"
 )
 
-type HandlerFunc = func(ctx context.Context, req *proto.RegisterRequest) (*proto.RegisterResponse, error)
+type HandlerFunc = func(ctx context.Context, req *proto.CreateRequest) (*proto.CreateResponse, error)
 
-type SellerRegisterer interface {
-	RegisterSellerContext(
+type SellerCreator interface {
+	CreateSellerContext(
 		ctx context.Context,
 		firstName string,
 		lastName string,
@@ -28,14 +28,14 @@ type SellerRegisterer interface {
 	) (int32, error)
 }
 
-func MakeRegisterHandlerFunc(log *slog.Logger, registerer SellerRegisterer) HandlerFunc {
-	const op = "grpc.seller.handler.register.MakeRegisterHandlerFunc"
+func MakeCreateHandlerFunc(log *slog.Logger, creator SellerCreator) HandlerFunc {
+	const op = "grpc.seller.handler.create.MakeCreateHandlerFunc"
 
 	log = log.With(
 		log, slog.String("op", op),
 	)
 
-	return func(ctx context.Context, req *proto.RegisterRequest) (*proto.RegisterResponse, error) {
+	return func(ctx context.Context, req *proto.CreateRequest) (*proto.CreateResponse, error) {
 		birthDate := protocore.ProtoDateToModelDate(req.BirthDate)
 		salary := protocore.ProtoMoneyToModelMoney(req.Salary)
 		worksAt, err := mapper.ProtoWorksAtToModelWorksAt(req.WorksAt)
@@ -44,7 +44,7 @@ func MakeRegisterHandlerFunc(log *slog.Logger, registerer SellerRegisterer) Hand
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 
-		id, err := registerer.RegisterSellerContext(
+		id, err := creator.CreateSellerContext(
 			ctx,
 			req.FirstName,
 			req.LastName,
@@ -56,11 +56,11 @@ func MakeRegisterHandlerFunc(log *slog.Logger, registerer SellerRegisterer) Hand
 		)
 
 		if err != nil {
-			log.Error("unable to register seller", slog.Any("err", err))
-			return nil, status.Errorf(codes.Internal, "unable to register seller: %s", err)
+			log.Error("unable to create seller", slog.Any("err", err))
+			return nil, status.Errorf(codes.Internal, "unable to create seller: %s", err)
 		}
 
-		return &proto.RegisterResponse{
+		return &proto.CreateResponse{
 			Id: id,
 		}, nil
 	}
