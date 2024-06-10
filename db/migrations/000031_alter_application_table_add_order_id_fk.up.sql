@@ -1,0 +1,1 @@
+ALTER TABLE application ADD COLUMN order_id INTEGER REFERENCES "order"(id);
