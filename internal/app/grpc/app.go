@@ -4,9 +4,19 @@ import (
 	"context"
 	"fmt"
 	"github.com/fatalistix/trade-organization-backend/internal/database/connection/postgres"
+	applicationgrpc "github.com/fatalistix/trade-organization-backend/internal/grpc/application"
+	customergrpc "github.com/fatalistix/trade-organization-backend/internal/grpc/customer"
+	ordergrpc "github.com/fatalistix/trade-organization-backend/internal/grpc/order"
+	productgrpc "github.com/fatalistix/trade-organization-backend/internal/grpc/product"
 	sellergrpc "github.com/fatalistix/trade-organization-backend/internal/grpc/seller"
+	suppliergrpc "github.com/fatalistix/trade-organization-backend/internal/grpc/supplier"
 	tradingpointgrpc "github.com/fatalistix/trade-organization-backend/internal/grpc/tradingpoint"
+	applicationrepository "github.com/fatalistix/trade-organization-backend/internal/repository/application"
+	customerrepository "github.com/fatalistix/trade-organization-backend/internal/repository/customer"
+	orderrepository "github.com/fatalistix/trade-organization-backend/internal/repository/order"
+	productrepository "github.com/fatalistix/trade-organization-backend/internal/repository/product"
 	sellerrepository "github.com/fatalistix/trade-organization-backend/internal/repository/seller"
+	supplierrepository "github.com/fatalistix/trade-organization-backend/internal/repository/supplier"
 	tradingpointrepository "github.com/fatalistix/trade-organization-backend/internal/repository/tradingpoint"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
@@ -47,8 +57,15 @@ func NewApp(log *slog.Logger, port int, database *postgres.Database) *App {
 		),
 	)
 
-	tradingpointgrpc.RegisterServer(grpcServer, log, tradingpointrepository.NewRepository(database))
+	productRepository := productrepository.NewRepository(database)
+
+	productgrpc.RegisterServer(grpcServer, log, productRepository)
+	tradingpointgrpc.RegisterServer(grpcServer, log, tradingpointrepository.NewRepository(database, productRepository))
 	sellergrpc.RegisterServer(grpcServer, log, sellerrepository.NewRepository(database))
+	suppliergrpc.RegisterServer(grpcServer, log, supplierrepository.NewRepository(database, productRepository))
+	applicationgrpc.RegisterServer(grpcServer, log, applicationrepository.NewRepository(database))
+	customergrpc.RegisterServer(grpcServer, log, customerrepository.NewRepository(database))
+	ordergrpc.RegisterServer(grpcServer, log, orderrepository.NewRepository(database))
 
 	return &App{
 		port:       port,
