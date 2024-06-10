@@ -3,15 +3,17 @@ package seller
 import (
 	"database/sql"
 	"fmt"
-	"github.com/fatalistix/trade-organization-backend/internal/domain/model/core"
+	modelcore "github.com/fatalistix/trade-organization-backend/internal/domain/model/core"
 	"github.com/fatalistix/trade-organization-backend/internal/domain/model/place_of_work"
 	model "github.com/fatalistix/trade-organization-backend/internal/domain/model/seller"
 	"github.com/fatalistix/trade-organization-backend/internal/domain/model/trading_point"
+	"github.com/fatalistix/trade-organization-backend/internal/repository/core"
+	"github.com/fatalistix/trade-organization-backend/internal/repository/tradingpoint"
+	proto "github.com/fatalistix/trade-organization-proto/gen/go/seller"
 )
 
 type seller struct {
 	ID               int32
-	Status           string
 	FirstName        string
 	LastName         string
 	MiddleName       string
@@ -27,12 +29,7 @@ type seller struct {
 func (s seller) ToModel() (model.Seller, error) {
 	const op = "repository.seller.ToModel"
 
-	status, err := model.StatusFromString(s.Status)
-	if err != nil {
-		return model.Seller{}, fmt.Errorf("%s: unable to convert string to model status: %w", op, err)
-	}
-
-	salary, err := core.MoneyFromString(s.Salary)
+	salary, err := modelcore.MoneyFromString(s.Salary)
 	if err != nil {
 		return model.Seller{}, fmt.Errorf("%s: unable to convert string to model money: %w", op, err)
 	}
@@ -62,14 +59,61 @@ func (s seller) ToModel() (model.Seller, error) {
 		worksAt = nil
 	}
 
-	birthDate, err := core.DateFromString(s.BirthDate)
+	birthDate, err := modelcore.DateFromString(s.BirthDate)
 	if err != nil {
 		return model.Seller{}, fmt.Errorf("%s: unable to convert string to model date: %w", op, err)
 	}
 
 	return model.Seller{
 		ID:          s.ID,
-		Status:      status,
+		FirstName:   s.FirstName,
+		LastName:    s.LastName,
+		MiddleName:  s.MiddleName,
+		BirthDate:   birthDate,
+		Salary:      salary,
+		PhoneNumber: s.PhoneNumber,
+		WorksAt:     worksAt,
+	}, nil
+}
+
+func (s seller) ToProto() (*proto.Seller, error) {
+	const op = "repository.seller.ToProto"
+
+	birthDate, err := core.StringToProtoDate(s.BirthDate)
+	if err != nil {
+		return nil, fmt.Errorf("%s: unable to convert string to proto date: %w", op, err)
+	}
+
+	salary, err := core.StringToProtoMoney(s.Salary)
+	if err != nil {
+		return nil, fmt.Errorf("%s: unable to convert string to proto money: %w", op, err)
+	}
+
+	var worksAt *proto.WorksAt
+	if s.PlaceOfWorkID.Valid && s.PlaceOfWorkType != nil && s.TradingPointID.Valid && s.TradingPointType != nil {
+		tradingPointType, err := tradingpoint.StringToProtoTradingPointType(*s.TradingPointType)
+		if err != nil {
+			return nil, fmt.Errorf("%s: unable to convert string to proto type: %w", op, err)
+		}
+		placeOfWorkType, err := tradingpoint.StringToProtoPlaceOfWorkType(*s.PlaceOfWorkType)
+		if err != nil {
+			return nil, fmt.Errorf("%s: unable to convert string to proto type: %w", op, err)
+		}
+
+		worksAt = &proto.WorksAt{
+			PlaceOfWork: &proto.PlaceOfWork{
+				Id:   s.PlaceOfWorkID.Int32,
+				Type: placeOfWorkType,
+			},
+			TradingPoint: &proto.TradingPoint{
+				Id:   s.TradingPointID.Int32,
+				Type: tradingPointType,
+			},
+		}
+	}
+
+	return &proto.Seller{
+		Id:          s.ID,
 		FirstName:   s.FirstName,
 		LastName:    s.LastName,
 		MiddleName:  s.MiddleName,

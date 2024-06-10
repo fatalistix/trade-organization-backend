@@ -6,6 +6,10 @@ import (
 	"github.com/fatalistix/trade-organization-backend/internal/database/connection/postgres"
 	modelcore "github.com/fatalistix/trade-organization-backend/internal/domain/model/core"
 	model "github.com/fatalistix/trade-organization-backend/internal/domain/model/seller"
+	"github.com/fatalistix/trade-organization-backend/internal/repository/core"
+	"github.com/fatalistix/trade-organization-backend/internal/repository/tradingpoint"
+	protocore "github.com/fatalistix/trade-organization-proto/gen/go/core"
+	proto "github.com/fatalistix/trade-organization-proto/gen/go/seller"
 	"github.com/uptrace/bun"
 	"log/slog"
 )
@@ -18,7 +22,7 @@ func NewRepository(database *postgres.Database) *Repository {
 	return &Repository{db: database.DB()}
 }
 
-func (r *Repository) RegisterSellerContext(
+func (r *Repository) CreateSellerContext(
 	ctx context.Context,
 	firstName string,
 	lastName string,
@@ -62,7 +66,7 @@ func (r *Repository) SellersContext(ctx context.Context, filter *model.Filter) (
 	const op = "repository.seller.Sellers"
 
 	query := r.db.NewSelect().
-		Column("id", "status", "first_name", "last_name", "middle_name", "birth_date", "salary", "phone_number",
+		Column("id", "first_name", "last_name", "middle_name", "birth_date", "salary", "phone_number",
 			"place_of_work_id", "place_of_work_type", "trading_point_id", "trading_point_type",
 		).TableExpr("seller")
 
@@ -114,16 +118,33 @@ func (r *Repository) SellersContext(ctx context.Context, filter *model.Filter) (
 	return ms, nil
 }
 
-func (r *Repository) UpdateSellerContext(
+func (r *Repository) SellerContext(ctx context.Context, id int32) (*proto.Seller, error) {
+	const op = "repository.seller.Seller"
+
+	var seller seller
+	err := r.db.NewSelect().
+		Column("id", "first_name", "last_name", "middle_name", "birth_date", "salary", "phone_number",
+			"place_of_work_id", "place_of_work_type", "trading_point_id", "trading_point_type").
+		Table("seller").
+		Where("id = ?", id).
+		Scan(ctx, &seller)
+	if err != nil {
+		return nil, fmt.Errorf("%s: unable to select seller: %w", op, err)
+	}
+
+	return seller.ToProto()
+}
+
+func (r *Repository) PatchSellerContext(
 	ctx context.Context,
 	id int32,
 	firstName *string,
 	lastName *string,
 	middleName *string,
-	birthDate *modelcore.Date,
-	salary *modelcore.Money,
+	birthDate *protocore.Date,
+	salary *protocore.Money,
 	phoneNumber *string,
-	worksAt *model.WorksAt,
+	worksAt *proto.NewWorksAt,
 ) error {
 	const op = "repository.seller.UpdateSeller"
 
@@ -138,19 +159,36 @@ func (r *Repository) UpdateSellerContext(
 		values["middle_name"] = *middleName
 	}
 	if birthDate != nil {
-		values["birth_date"] = (*birthDate).String()
+		values["birth_date"] = core.ProtoDateToString(birthDate)
 	}
 	if salary != nil {
-		values["salary"] = salary.String()
+		values["salary"] = core.ProtoMoneyToString(salary)
 	}
 	if phoneNumber != nil {
 		values["phone_number"] = *phoneNumber
 	}
 	if worksAt != nil {
-		values["place_of_work_id"] = worksAt.PlaceOfWork.ID
-		values["place_of_work_type"] = worksAt.PlaceOfWork.Type
-		values["trading_point_id"] = worksAt.TradingPoint.ID
-		values["trading_point_type"] = worksAt.TradingPoint.Type
+		if worksAt.WorksAt == nil {
+			values["place_of_work_id"] = nil
+			values["place_of_work_type"] = nil
+			values["trading_point_id"] = nil
+			values["trading_point_type"] = nil
+		} else {
+			placeOfWorkType, err := tradingpoint.ProtoPlaceOfWorkTypeToString(worksAt.WorksAt.PlaceOfWork.Type)
+			if err != nil {
+				return fmt.Errorf("%s: unable to convert place of work type: %w", op, err)
+			}
+
+			tradingPointType, err := tradingpoint.ProtoTradingPointTypeToString(worksAt.WorksAt.TradingPoint.Type)
+			if err != nil {
+				return fmt.Errorf("%s: unable to convert trading point type: %w", op, err)
+			}
+
+			values["place_of_work_id"] = worksAt.WorksAt.PlaceOfWork.Id
+			values["place_of_work_type"] = placeOfWorkType
+			values["trading_point_id"] = worksAt.WorksAt.TradingPoint.Id
+			values["trading_point_type"] = tradingPointType
+		}
 	}
 
 	slog.Info(op, slog.Any("values", values))

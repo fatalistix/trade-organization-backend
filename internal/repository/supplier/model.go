@@ -3,7 +3,6 @@ package supplier
 import (
 	"fmt"
 	"github.com/fatalistix/trade-organization-backend/internal/repository/core"
-	protoproduct "github.com/fatalistix/trade-organization-proto/gen/go/product"
 	proto "github.com/fatalistix/trade-organization-proto/gen/go/supplier"
 )
 
@@ -49,24 +48,16 @@ type productSupplier struct {
 	Price      string
 }
 
-func (s productSupplier) ToProtoWith(products []*protoproduct.Product) (*proto.ProductSupplier, error, bool) {
+func (s productSupplier) ToProto() (*proto.ProductSupplier, error) {
 	const op = "repository.supplier.productSupplier.ToProto"
 
 	price, err := core.StringToProtoMoney(s.Price)
 	if err != nil {
-		return nil, fmt.Errorf("%s: unable to convert string to proto money: %w", op, err), false
+		return nil, fmt.Errorf("%s: unable to convert string to proto money: %w", op, err)
 	}
 
-	protoProductSupplier := &proto.ProductSupplier{
-		Price: price,
-	}
-
-	for i := range products {
-		if products[i].Id == s.ProductID {
-			protoProductSupplier.Product = products[i]
-			return protoProductSupplier, nil, true
-		}
-	}
-
-	return nil, fmt.Errorf("%s: product not found", op), false
+	return &proto.ProductSupplier{
+		ProductId: s.ProductID,
+		Price:     price,
+	}, nil
 }

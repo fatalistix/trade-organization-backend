@@ -6,21 +6,27 @@ import (
 	"fmt"
 	"github.com/fatalistix/trade-organization-backend/internal/database/connection/postgres"
 	"github.com/fatalistix/trade-organization-backend/internal/domain/model/core"
-	"github.com/fatalistix/trade-organization-backend/internal/domain/model/department_store"
-	modelhall "github.com/fatalistix/trade-organization-backend/internal/domain/model/hall"
 	"github.com/fatalistix/trade-organization-backend/internal/domain/model/hall_container"
-	"github.com/fatalistix/trade-organization-backend/internal/domain/model/receipting_point_with_accounting"
-	modelsection "github.com/fatalistix/trade-organization-backend/internal/domain/model/section"
 	"github.com/fatalistix/trade-organization-backend/internal/domain/model/trading_point"
+	protoproduct "github.com/fatalistix/trade-organization-proto/gen/go/product"
+	proto "github.com/fatalistix/trade-organization-proto/gen/go/tradingpoint"
 	"github.com/uptrace/bun"
 )
 
-type Repository struct {
-	db *bun.DB
+type ProductProvider interface {
+	ProductsContext(ctx context.Context, ids *[]int32) ([]*protoproduct.Product, error)
 }
 
-func NewRepository(database *postgres.Database) *Repository {
-	return &Repository{db: database.DB()}
+type Repository struct {
+	db              *bun.DB
+	productProvider ProductProvider
+}
+
+func NewRepository(database *postgres.Database, productProvider ProductProvider) *Repository {
+	return &Repository{
+		db:              database.DB(),
+		productProvider: productProvider,
+	}
 }
 
 func (r *Repository) RegisterTradingPoint(
@@ -291,21 +297,73 @@ func (r *Repository) TradingPointsContext(ctx context.Context) ([]trading_point.
 	return mtps, nil
 }
 
-func (r *Repository) TradingPointContext(ctx context.Context, id int32, t trading_point.Type) (trading_point.TradingPoint, error) {
+func (r *Repository) TradingPointContext(ctx context.Context, id int32, t proto.TradingPointType) (*proto.TradingPoint, error) {
 	const op = "repository.tradingpoint.TradingPoint"
 
+	tradingPointType, err := ProtoTradingPointTypeToString(t)
+	if err != nil {
+		return nil, fmt.Errorf("%s: unable to convert trading point type: %w", op, err)
+	}
+
 	var tradingPoint tradingPoint
-	err := r.db.NewSelect().
+	err = r.db.NewSelect().
 		Column("id", "type", "area_plot", "rental_charge", "counter_count", "address").
 		TableExpr("trading_point").
 		Where("id = ?", id).
-		Where("type = ?", t.String()).
+		Where("type = ?", tradingPointType).
 		Scan(ctx, &tradingPoint)
 	if err != nil {
-		return trading_point.TradingPoint{}, fmt.Errorf("%s: unable to get trading point: %w", op, err)
+		return nil, fmt.Errorf("%s: unable to get trading point: %w", op, err)
 	}
 
-	return tradingPoint.ToModel()
+	productTradingPoints, err := r.ProductTradingPointsContext(ctx, &id, nil)
+	if err != nil {
+		return nil, fmt.Errorf("%s: unable to get product trading points: %w", op, err)
+	}
+
+	return tradingPoint.ToProtoWith(productTradingPoints)
+}
+
+func (r *Repository) ProductTradingPointsContext(ctx context.Context, tradingPointID *int32, tradingPointType *proto.TradingPointType) ([]*proto.ProductTradingPoint, error) {
+	const op = "repository.tradingpoint.ProductTradingPoints"
+
+	query := r.db.NewSelect().
+		Column("id", "trading_point_id", "trading_point_type", "product_id", "quantity", "price").
+		TableExpr("product_trading_point")
+
+	if tradingPointID != nil {
+		query = query.Where("trading_point_id = ?", *tradingPointID)
+	}
+
+	if tradingPointType != nil {
+		tradingPointTypeString, err := ProtoTradingPointTypeToString(*tradingPointType)
+		if err != nil {
+			return nil, fmt.Errorf("%s: unable to convert trading point type: %w", op, err)
+		}
+		query = query.Where("trading_point_type = ?", tradingPointTypeString)
+	}
+
+	productTradingPoints := make([]productTradingPoint, 0)
+	err := query.Scan(ctx, &productTradingPoints)
+	if err != nil {
+		return nil, fmt.Errorf("%s: unable to get product trading points: %w", op, err)
+	}
+
+	ids := make([]int32, 0, len(productTradingPoints))
+	for _, productTradingPoint := range productTradingPoints {
+		ids = append(ids, productTradingPoint.ProductID)
+	}
+
+	protoProducts := make([]*proto.ProductTradingPoint, 0, len(productTradingPoints))
+	for _, productTradingPoint := range productTradingPoints {
+		protoProduct, err := productTradingPoint.ToProto()
+		if err != nil {
+			return nil, fmt.Errorf("%s: unable to convert product trading point to proto: %w", op, err)
+		}
+		protoProducts = append(protoProducts, protoProduct)
+	}
+
+	return protoProducts, nil
 }
 
 func (r *Repository) AddHallContext(
@@ -393,32 +451,34 @@ func (r *Repository) AddSectionContext(
 	return id, nil
 }
 
-func (r *Repository) DepartmentStoreContext(ctx context.Context, id int32) (department_store.DepartmentStore, error) {
+func (r *Repository) DepartmentStoreContext(ctx context.Context, id int32) (*proto.DepartmentStore, error) {
 	const op = "repository.tradingpoint.DepartmentStoreContext"
 
-	tradingPoint, err := r.TradingPointContext(ctx, id, trading_point.TypeDepartmentStore)
+	tradingPoint, err := r.TradingPointContext(ctx, id, proto.TradingPointType_TRADING_POINT_DEPARTMENT_STORE)
 	if err != nil {
-		return department_store.DepartmentStore{}, fmt.Errorf("%s: unable to get trading point: %w", op, err)
+		return nil, fmt.Errorf("%s: unable to get trading point: %w", op, err)
 	}
 
-	receiptingPointWithAccounting, err := r.ReceiptingPointWithAccountingContext(ctx, id, receipting_point_with_accounting.TypeDepartmentStore)
+	receiptingPointWithAccounting, err := r.ReceiptingPointWithAccountingContext(
+		ctx, id, proto.ReceiptingPointWithAccountingType_RECEIPTING_POINT_WITH_ACCOUNTING_DEPARTMENT_STORE,
+	)
 	if err != nil {
-		return department_store.DepartmentStore{}, fmt.Errorf("%s: unable to get receipting point with accounting: %w", op, err)
+		return nil, fmt.Errorf("%s: unable to get receipting point with accounting: %w", op, err)
 	}
 
-	tradingPointType := trading_point.TypeDepartmentStore
+	tradingPointType := proto.TradingPointType_TRADING_POINT_DEPARTMENT_STORE
 	halls, err := r.HallsContext(ctx, &id, &tradingPointType)
 	if err != nil {
-		return department_store.DepartmentStore{}, fmt.Errorf("%s: unable to get halls: %w", op, err)
+		return nil, fmt.Errorf("%s: unable to get halls: %w", op, err)
 	}
 
 	sections, err := r.SectionsContext(ctx, &id)
 	if err != nil {
-		return department_store.DepartmentStore{}, fmt.Errorf("%s: unable to get sections: %w", op, err)
+		return nil, fmt.Errorf("%s: unable to get sections: %w", op, err)
 	}
 
-	return department_store.DepartmentStore{
-		ID:                            id,
+	return &proto.DepartmentStore{
+		Id:                            id,
 		TradingPoint:                  tradingPoint,
 		ReceiptingPointWithAccounting: receiptingPointWithAccounting,
 		Halls:                         halls,
@@ -426,66 +486,88 @@ func (r *Repository) DepartmentStoreContext(ctx context.Context, id int32) (depa
 	}, nil
 }
 
-func (r *Repository) ReceiptingPointWithAccountingContext(ctx context.Context, id int32, t receipting_point_with_accounting.Type) (receipting_point_with_accounting.ReceiptingPointWithAccounting, error) {
+func (r *Repository) ReceiptingPointWithAccountingContext(ctx context.Context, id int32, t proto.ReceiptingPointWithAccountingType) (*proto.ReceiptingPointWithAccounting, error) {
 	const op = "repository.tradingpoint.ReceiptingPointWithAccounting"
 
+	receiptingPointWithAccountingTypeString, err := ProtoReceiptingPointWithAccountingTypeToString(t)
+	if err != nil {
+		return nil, fmt.Errorf("%s: unable to convert receipting point with accounting type: %w", op, err)
+	}
+
 	var receiptingPointWithAccounting receiptingPointWithAccounting
-	err := r.db.NewSelect().
+	err = r.db.NewSelect().
 		Column("id", "type").
 		TableExpr("receipting_point_with_accounting").
 		Where("id = ?", id).
-		Where("type = ?", t.String()).
+		Where("type = ?", receiptingPointWithAccountingTypeString).
 		Scan(ctx, &receiptingPointWithAccounting)
 	if err != nil {
-		return receipting_point_with_accounting.ReceiptingPointWithAccounting{}, fmt.Errorf("%s: unable to get receipting point with accounting: %w", op, err)
+		return nil, fmt.Errorf("%s: unable to get receipting point with accounting: %w", op, err)
 	}
 
-	return receiptingPointWithAccounting.ToModel()
+	return receiptingPointWithAccounting.ToProto()
 }
 
-func (r *Repository) HallsContext(ctx context.Context, tradingPointID *int32, tradingPointType *trading_point.Type) ([]modelhall.Hall, error) {
+func (r *Repository) HallsContext(ctx context.Context, tradingPointID *int32, tradingPointType *proto.TradingPointType) ([]*proto.Hall, error) {
 	const op = "repository.tradingpoint.HallsContext"
 
-	halls := make([]hall, 0)
-	err := r.db.NewSelect().
+	query := r.db.NewSelect().
 		Column("id", "type", "hall_container_id", "hall_container_type", "trading_point_id", "trading_point_type").
-		TableExpr("hall").
-		Where("trading_point_id = ?", tradingPointID).
-		Where("trading_point_type = ?", tradingPointType.String()).
-		Scan(ctx, &halls)
+		TableExpr("hall")
+
+	if tradingPointID != nil {
+		query = query.Where("trading_point_id = ?", *tradingPointID)
+	}
+
+	if tradingPointType != nil {
+		tradingPointTypeString, err := ProtoTradingPointTypeToString(*tradingPointType)
+		if err != nil {
+			return nil, fmt.Errorf("%s: unable to convert trading point type: %w", op, err)
+		}
+		query = query.Where("trading_point_type = ?", tradingPointTypeString)
+	}
+
+	halls := make([]hall, 0)
+
+	err := query.Scan(ctx, &halls)
 	if err != nil {
 		return nil, fmt.Errorf("%s: unable to get halls: %w", op, err)
 	}
 
-	modelHalls := make([]modelhall.Hall, 0, len(halls))
+	protoHalls := make([]*proto.Hall, 0, len(halls))
 	for _, h := range halls {
-		mh, err := h.ToModel()
+		ph, err := h.ToProto()
 		if err != nil {
 			return nil, fmt.Errorf("%s: unable to convert hall: %w", op, err)
 		}
-		modelHalls = append(modelHalls, mh)
+		protoHalls = append(protoHalls, ph)
 	}
 
-	return modelHalls, nil
+	return protoHalls, nil
 }
 
-func (r *Repository) SectionsContext(ctx context.Context, departmentStoreID *int32) ([]modelsection.Section, error) {
+func (r *Repository) SectionsContext(ctx context.Context, departmentStoreID *int32) ([]*proto.Section, error) {
 	const op = "repository.tradingpoint.SectionsContext"
 
-	sections := make([]section, 0)
-	err := r.db.NewSelect().
+	query := r.db.NewSelect().
 		Column("id", "type", "department_store_id").
-		TableExpr("section").
-		Where("department_store_id = ?", departmentStoreID).
-		Scan(ctx, &sections)
+		TableExpr("section")
+
+	if departmentStoreID != nil {
+		query = query.Where("department_store_id = ?", *departmentStoreID)
+	}
+
+	sections := make([]section, 0)
+
+	err := query.Scan(ctx, &sections)
 	if err != nil {
 		return nil, fmt.Errorf("%s: unable to get sections: %w", op, err)
 	}
 
-	modelSections := make([]modelsection.Section, 0, len(sections))
+	protoSections := make([]*proto.Section, 0, len(sections))
 	for _, s := range sections {
-		modelSections = append(modelSections, s.ToModel())
+		protoSections = append(protoSections, s.ToProto())
 	}
 
-	return modelSections, nil
+	return protoSections, nil
 }
